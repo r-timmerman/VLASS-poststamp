@@ -8,9 +8,6 @@ Original code by Anna Ho
 Edited by Roland Timmerman
 """
 
-## TO DO
-# figure out the weird 1 pixel offset
-
 
 #Imports
 import os
