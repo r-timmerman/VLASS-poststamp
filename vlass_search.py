@@ -93,7 +93,7 @@ def get_subtiles(tilename, epoch, consider_QA_rejected):
     """
     
     #Obtain the HTML for the given tile
-    urlpath = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}v2/{}"format(epoch, tilename))
+    urlpath = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}v2/{}".format(epoch, tilename))
     string = urlpath.read().decode('utf-8').split("\n")
 
     if consider_QA_rejected:
