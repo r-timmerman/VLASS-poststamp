@@ -54,14 +54,44 @@ def get_tiles():
     Returns: tile names (numpy str), dec_min (numpy float), dec_max (numpy float), ra_min (numpy float), ra_max (numpy float), observing epoch (numpy str), observation date (numpy str)
     """
     
-    names, dec_min, dec_max, ra_min, ra_max, epoch, obsdate = np.loadtxt(summary_file_location, skiprows=3, unpack=True, dtype='str', usecols=(0,1,2,3,4,5,6))
+    name_array = []
+    dec_min_array = []
+    dec_max_array = []
+    ra_min_array = []
+    ra_max_array = []
+    epoch_array = []
+    obsdate_array = []
+    
+    with open(summary_file_location, 'r') as f:
+        lines = f.readlines()[3:]
+        for line in lines:
+            name = line[0:6]
+            dec_min = float(line[9:16])
+            dec_max = float(line[18:25])
+            ra_min = float(line[28:34])
+            ra_max = float(line[37:43])
+            epoch = line[47:55]
+            obsdate = line[61:71]
+            status = line[86:97]
+            
+            if status == f"100% imaged":
+                name_array.append(name)
+                dec_min_array.append(dec_min)
+                dec_max_array.append(dec_max)
+                ra_min_array.append(ra_min)
+                ra_max_array.append(ra_max)
+                epoch_array.append(epoch)
+                obsdate_array.append(obsdate)
 
-    dec_min = dec_min.astype(float)
-    dec_max = dec_max.astype(float)
-    ra_min = ra_min.astype(float)
-    ra_max = ra_max.astype(float)
+    name_array = np.array(name_array)
+    ra_min_array = np.array(ra_min_array)
+    ra_max_array = np.array(ra_max_array)
+    dec_min_array = np.array(dec_min_array)
+    dec_max_array = np.array(dec_max_array)
+    epoch_array = np.array(epoch_array)
+    obsdate_array = np.array(obsdate_array)
 
-    return (names, dec_min, dec_max, ra_min, ra_max, epoch, obsdate)
+    return (name_array, dec_min_array, dec_max_array, ra_min_array, ra_max_array, epoch_array, obsdate_array)
 
 
 def search_tiles(tiles, c):
@@ -83,7 +113,8 @@ def search_tiles(tiles, c):
         raise IndexError("Zero VLASS tiles available for the given coordinate")
     c_grid = SkyCoord(7.5*(ra_min[in_tile]+ra_max[in_tile]), 0.5*(dec_min[in_tile]+dec_max[in_tile]), unit='deg', frame='icrs')
     dist = c_grid.separation(c)
-    best_idx = np.argmin(dist)
+    nearest_tiles = np.where(dist == np.min(dist))[0]
+    best_idx = nearest_tiles[epoch==max(epoch[nearest_tiles])][0]
     return name[best_idx], epoch[best_idx], date[best_idx]
 
 
@@ -95,12 +126,18 @@ def get_subtiles(tilename, epoch, consider_QA_rejected):
     """
     
     #Obtain the HTML for the given tile
-    urlpath = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}v2/{}".format(epoch, tilename))
+    if epoch[5] == "1":
+        urlpath = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}v2/{}".format(epoch, tilename))
+    else:
+        urlpath = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}/{}".format(epoch, tilename))
     string = urlpath.read().decode('utf-8').split("\n")
 
     if consider_QA_rejected:
         #Obtain the HTML for the QA Rejected
-        urlpath_rejected = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}v2/QA_REJECTED".format(epoch))
+        if epoch[5] == "1":
+            urlpath_rejected = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}v2/QA_REJECTED".format(epoch))
+        else:
+            urlpath_rejected = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}/QA_REJECTED".format(epoch))
         string += urlpath_rejected.read().decode('utf-8').split("\n")
 
     #Select only the subtile parts
@@ -194,11 +231,17 @@ def search_vlass(c, crop=False, crop_scale=256, consider_QA_rejected=False):
 
     imname = "{}.I.iter1.image.pbcor.tt0.subim.fits".format(subtile[:-1])
     if len(glob.glob(imname)) == 0:
-        url_get = "https://archive-new.nrao.edu/vlass/quicklook/{}v2/{}/{}".format(epoch, tilename, subtile)
+        if epoch[5] == "1":
+            url_get = "https://archive-new.nrao.edu/vlass/quicklook/{}v2/{}/{}".format(epoch, tilename, subtile)
+        else:
+            url_get = "https://archive-new.nrao.edu/vlass/quicklook/{}/{}/{}".format(epoch, tilename, subtile)
         fname = "{}{}".format(url_get, imname)
         subprocess.call("wget {}".format(fname), shell=True)
         if not os.path.exists(subtile) and consider_QA_rejected:
-            url_get = "https://archive-new.nrao.edu/vlass/quicklook/{}v2/QA_REJECTED/{}".format(epoch, subtile)
+            if epoch[5] == "1":
+                url_get = "https://archive-new.nrao.edu/vlass/quicklook/{}v2/QA_REJECTED/{}".format(epoch, subtile)
+            else:
+                url_get = "https://archive-new.nrao.edu/vlass/quicklook/{}/QA_REJECTED/{}".format(epoch, subtile)
             fname = "{}{}".format(url_get, imname)
             subprocess.call("wget {}".format(fname), shell=True)
     if crop:    
