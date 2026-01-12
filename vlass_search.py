@@ -126,17 +126,17 @@ def get_subtiles(tilename, epoch, consider_QA_rejected):
     
     #Obtain the HTML for the given tile
     if epoch[5] == "1":
-        urlpath = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}v2/{}".format(epoch, tilename))
+        urlpath = urlopen("https://vlass-dl.nrao.edu/vlass/quicklook/{}v2/{}".format(epoch, tilename))
     else:
-        urlpath = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}/{}".format(epoch, tilename))
+        urlpath = urlopen("https://vlass-dl.nrao.edu/vlass/quicklook/{}/{}".format(epoch, tilename))
     string = urlpath.read().decode('utf-8').split("\n")
 
     if consider_QA_rejected:
         #Obtain the HTML for the QA Rejected
         if epoch[5] == "1":
-            urlpath_rejected = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}v2/QA_REJECTED".format(epoch))
+            urlpath_rejected = urlopen("https://vlass-dl.nrao.edu/vlass/quicklook/{}v2/QA_REJECTED".format(epoch))
         else:
-            urlpath_rejected = urlopen("https://archive-new.nrao.edu/vlass/quicklook/{}/QA_REJECTED".format(epoch))
+            urlpath_rejected = urlopen("https://vlass-dl.nrao.edu/vlass/quicklook/{}/QA_REJECTED".format(epoch))
         string += urlpath_rejected.read().decode('utf-8').split("\n")
 
     #Select only the subtile parts
@@ -231,16 +231,16 @@ def search_vlass(c, crop=False, crop_scale=256, consider_QA_rejected=False):
     imname = "{}.I.iter1.image.pbcor.tt0.subim.fits".format(subtile[:-1])
     if len(glob.glob(imname)) == 0:
         if epoch[5] == "1":
-            url_get = "https://archive-new.nrao.edu/vlass/quicklook/{}v2/{}/{}".format(epoch, tilename, subtile)
+            url_get = "https://vlass-dl.nrao.edu/vlass/quicklook/{}v2/{}/{}".format(epoch, tilename, subtile)
         else:
-            url_get = "https://archive-new.nrao.edu/vlass/quicklook/{}/{}/{}".format(epoch, tilename, subtile)
+            url_get = "https://vlass-dl.nrao.edu/vlass/quicklook/{}/{}/{}".format(epoch, tilename, subtile)
         fname = "{}{}".format(url_get, imname)
         subprocess.call("wget {}".format(fname), shell=True)
         if not os.path.exists(subtile) and consider_QA_rejected:
             if epoch[5] == "1":
-                url_get = "https://archive-new.nrao.edu/vlass/quicklook/{}v2/QA_REJECTED/{}".format(epoch, subtile)
+                url_get = "https://vlass-dl.nrao.edu/vlass/quicklook/{}v2/QA_REJECTED/{}".format(epoch, subtile)
             else:
-                url_get = "https://archive-new.nrao.edu/vlass/quicklook/{}/QA_REJECTED/{}".format(epoch, subtile)
+                url_get = "https://vlass-dl.nrao.edu/vlass/quicklook/{}/QA_REJECTED/{}".format(epoch, subtile)
             fname = "{}{}".format(url_get, imname)
             subprocess.call("wget {}".format(fname), shell=True)
     if crop:    
